@@ -263,7 +263,7 @@ begin
   begin  -- process
 
     if (r or w) = '1' then
-      if address(19 downto 13)&'0' = x"FB" then
+      if address(19 downto 13)&'0' = x"FC" then
         kickstartcs<= '1';
       else
         kickstartcs <='0';

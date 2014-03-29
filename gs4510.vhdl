@@ -519,10 +519,10 @@ begin
     
     -- Kickstart ROM (takes precedence over all else if enabled)
     if (blocknum=14) and (kickstart_en='1') and (writeP=false) then
-      temp_address(27 downto 12) := x"FFFB";      
+      temp_address(27 downto 12) := x"FFFC";      
     end if;
     if (blocknum=15) and (kickstart_en='1') and (writeP=false) then
-      temp_address(27 downto 12) := x"FFFC";      
+      temp_address(27 downto 12) := x"FFFD";      
     end if;
     
     return temp_address;
