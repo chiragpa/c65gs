@@ -1752,8 +1752,14 @@ c1:		lda ($C2),y
 		jmp kickstart_entry
 
 ; For now we have no use for NMI or IRQ
-nmi_entry:	rti
-irq_entry:	rti
+nmi_entry:	
+irq_entry:	
+		pha
+		lda $dc0d
+		lda $dd0d
+		asl $d019
+		pla
+		rti
 
 ; 6502 interrupt and reset vectors
        		.checkpc $FFFA
