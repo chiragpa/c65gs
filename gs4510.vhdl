@@ -142,6 +142,12 @@ architecture Behavioural of gs4510 is
   signal slowram_waitstates : unsigned(7 downto 0) := x"05";
   
   signal fastram_byte_number : unsigned(2 DOWNTO 0);
+  signal fastram_byte_number_2 : unsigned(2 DOWNTO 0);
+  signal fastram_byte_number_3 : unsigned(2 DOWNTO 0);
+  signal fastram_byte_2_valid : std_logic;
+  signal fastram_byte_3_valid : std_logic;
+  signal last_fastram_address : unsigned(13 downto 0);
+  signal presenting_fastram_address : unsigned(13 downto 0);
 
   signal word_flag : std_logic := '0';
 
@@ -594,7 +600,25 @@ begin
         & ", word $" & to_hstring(long_address(18 downto 3)) severity note;
       accessing_ram <= '1';
       fastram_address <= std_logic_vector(long_address(16 downto 3));
+
+      -- Set up the information we need to know if we can fetch an instruction
+      -- in parallel, or read both bytes of a word.
+      last_fastram_address <= long_address(16 downto 3);
       fastram_byte_number <= long_address(2 downto 0);
+      fastram_byte_number_2 <= long_address(2 downto 0)+1;
+      fastram_byte_number_3 <= long_address(2 downto 0)+2;
+      case long_address(2 downto 0) is
+        when "000" => fastram_byte_2_valid <= '1'; fastram_byte_3_valid <= '1';
+        when "001" => fastram_byte_2_valid <= '1'; fastram_byte_3_valid <= '1';
+        when "010" => fastram_byte_2_valid <= '1'; fastram_byte_3_valid <= '1';
+        when "011" => fastram_byte_2_valid <= '1'; fastram_byte_3_valid <= '1';
+        when "100" => fastram_byte_2_valid <= '1'; fastram_byte_3_valid <= '1';
+        when "101" => fastram_byte_2_valid <= '1'; fastram_byte_3_valid <= '1';
+        when "110" => fastram_byte_2_valid <= '1'; fastram_byte_3_valid <= '0';
+        when "111" => fastram_byte_2_valid <= '0'; fastram_byte_3_valid <= '0';
+        when others => fastram_byte_2_valid <= '0'; fastram_byte_3_valid <= '0';
+      end case;
+        
       -- By moving fastram to pixel clock instead of CPU clock, a read can happen
       -- easily in one cpu cycle, thus avoiding the wait state. Now to see if it
       -- can synthesise...
@@ -1593,6 +1617,10 @@ downto 8) = x"D3F" then
 
     -- BEGINNING OF MAIN PROCESS FOR CPU
     if rising_edge(clock) then
+
+      -- remember what fastram interface is doing
+      presenting_fastram_address <= last_fastram_address;
+      
       -- clear memory access states
       colour_ram_cs <= '0';
       colour_ram_cs_last <= '0';
