@@ -2011,12 +2011,17 @@ downto 8) = x"D3F" then
                 report "reg_pc bump from $" & to_hstring(reg_pc) severity note;
                 read_instruction_byte(reg_pc,InstructionFetch4);
               else
-                execute_instruction(opcode,read_data,x"00");
+                reg_opcode <= opcode;
+                arg1 <= read_data;
+                arg2 <= x"00";
+                state <= InstructionFetchFast;
               end if;
             when InstructionFetch4 =>
               -- we now have three bytes of the instruction
               report "reg_pc is $" & to_hstring(reg_pc) severity note;
-              execute_instruction(opcode,arg1,read_data);
+              reg_opcode <= opcode;
+              arg2 <= read_data;
+              state <= InstructionFetchFast;
             when BRK1 => push_byte(reg_pc(7 downto 0),BRK2);
             when BRK2 =>
               -- set B flag in P before pushing
