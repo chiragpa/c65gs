@@ -148,6 +148,7 @@ architecture Behavioural of gs4510 is
   signal fastram_byte_3_valid : std_logic;
   signal last_fastram_address : unsigned(13 downto 0);
   signal presenting_fastram_address : unsigned(13 downto 0);
+  signal fastdecode : std_logic := '0';
 
   signal word_flag : std_logic := '0';
 
@@ -539,6 +540,7 @@ begin
     next_pc : in unsigned(15 downto 0)) is
   begin  -- ready_for_next_instruction
     state <= InstructionFetch;
+    reg_pc_jsr <= next_pc + 2;
     -- XXX Resolve PC to long address.
     -- XXX Schedule reading from all four i-cache files
     -- (uses less logic than picking only one)
@@ -803,6 +805,9 @@ downto 8) = x"D3F" then
       reg_dmagic_withio <= value(7);
     elsif (long_address = x"FFD3704") or (long_address = x"FFD1704") then
       reg_dmagic_addr(27 downto 20) <= value;
+    elsif (long_address = x"FFD37FE") or (long_address = x"FFD17FE") then
+      -- enable/disable fast instruction decoding
+      fastdecode <= value(0);
     elsif (long_address = x"FFD37ff") or (long_address = x"FFD17ff") then
       -- re-enable kickstart ROM.  This is only to allow for easier development
       -- of kickstart ROMs.
@@ -990,6 +995,38 @@ downto 8) = x"D3F" then
     read_address(address,next_state);
   end read_data_byte;
 
+  -- purpose: read extra instruction bytes
+  impure function read_fastram_byte_2
+    return unsigned is
+  begin  -- read_fastram_byte_2
+    case fastram_byte_number_2 is
+      when "000" => return unsigned(fastram_dataout( 7 downto 0));
+      when "001" => return unsigned(fastram_dataout(15 downto 8));
+      when "010" => return unsigned(fastram_dataout(23 downto 16));
+      when "011" => return unsigned(fastram_dataout(31 downto 24));
+      when "100" => return unsigned(fastram_dataout(39 downto 32));
+      when "101" => return unsigned(fastram_dataout(47 downto 40));
+      when "110" => return unsigned(fastram_dataout(55 downto 48));
+      when "111" => return unsigned(fastram_dataout(63 downto 56));
+      when others => return x"FF";
+    end case;    
+  end read_fastram_byte_2;
+  impure function read_fastram_byte_3
+    return unsigned is
+  begin  -- read_fastram_byte_3
+    case fastram_byte_number_3 is
+      when "000" => return unsigned(fastram_dataout( 7 downto 0));
+      when "001" => return unsigned(fastram_dataout(15 downto 8));
+      when "010" => return unsigned(fastram_dataout(23 downto 16));
+      when "011" => return unsigned(fastram_dataout(31 downto 24));
+      when "100" => return unsigned(fastram_dataout(39 downto 32));
+      when "101" => return unsigned(fastram_dataout(47 downto 40));
+      when "110" => return unsigned(fastram_dataout(55 downto 48));
+      when "111" => return unsigned(fastram_dataout(63 downto 56));
+      when others => return x"FF";
+    end case;    
+  end read_fastram_byte_3;
+    
   -- purpose: obtain the byte of memory that has been read
   impure function read_data
     return unsigned is
@@ -1839,14 +1876,14 @@ downto 8) = x"D3F" then
                 else
                   -- fill and swap not supported yet
                   dma_pending <= '0';
-                  state <= InstructionFetch;
+                  ready_for_next_instruction(reg_pc);
                 end if;
               end if;
             when DMAgic13 =>            -- DMA complete
                 dma_pending <= '0';
                 -- Is this the last DMA command in the chain?
                 if dmagic_cmd(2)='0' then
-                  state <= InstructionFetch;
+                  ready_for_next_instruction(reg_pc);
                 else
                   state <= DMAgic0;
                 end if;
@@ -1925,24 +1962,55 @@ downto 8) = x"D3F" then
                 execute_implied_instruction(read_data);
               else
                 report "opcode: read_data = %" & to_string(std_logic_vector(read_data)) severity note;
-                opcode <= read_data;
-                reg_opcode <= read_data;
-                monitor_opcode <= std_logic_vector(read_data);
-                reg_pc <= reg_pc + 1;
-                report "reg_pc bump from $" & to_hstring(reg_pc) severity note;
-                read_instruction_byte(reg_pc,InstructionFetch3);
+                -- If reading the instruction from fastram, check if the extra
+                -- bytes of the instruction are available immediately.
+                if fastdecode='1'
+                  and accessing_ram = '1' and fastram_byte_2_valid='1' then
+                  if mode_bytes_lut(mode_lut(to_integer(opcode)))=2 then
+                    -- two byte instruction with two bytes available
+                    -- no funny JSR fixes required, because JSR is a 3 byte
+                    -- instruction
+                    execute_instruction(opcode,read_fastram_byte_2,
+                                        x"00");
+                  else
+                    -- three byte instruction
+                    opcode <= read_data;
+                    reg_opcode <= read_data;
+                    monitor_opcode <= std_logic_vector(read_data);
+                    reg_pc <= reg_pc + 2;
+                    if fastram_byte_3_valid='1' then
+                      -- we have enough bytes
+                      reg_pc <= reg_pc + 3;
+                      execute_instruction(opcode,read_fastram_byte_2,
+                                          read_fastram_byte_3);
+                    else
+                      -- we have only 2 bytes
+                      -- need a 3rd byte
+                      arg1 <= read_fastram_byte_2;
+                      read_instruction_byte(reg_pc+1,InstructionFetch4);
+                    end if;
+                  end if;
+                else
+                  opcode <= read_data;
+                  reg_opcode <= read_data;
+                  monitor_opcode <= std_logic_vector(read_data);
+                  reg_pc <= reg_pc + 1;
+                  report "reg_pc bump from $" & to_hstring(reg_pc) severity note;
+                  read_instruction_byte(reg_pc,InstructionFetch3);
+                end if;
               end if;
             when InstructionFetch3 =>
+              -- we now have 2 bytes of the instruction
               if mode_bytes_lut(mode_lut(to_integer(opcode)))=2 then
                 arg1 <= read_data;
                 reg_pc <= reg_pc + 1;
-                reg_pc_jsr <= reg_pc;     -- keep PC after one operand for JSR
                 report "reg_pc bump from $" & to_hstring(reg_pc) severity note;
                 read_instruction_byte(reg_pc,InstructionFetch4);
               else
                 execute_instruction(opcode,read_data,x"00");
               end if;
             when InstructionFetch4 =>
+              -- we now have three bytes of the instruction
               report "reg_pc is $" & to_hstring(reg_pc) severity note;
               execute_instruction(opcode,arg1,read_data);
             when BRK1 => push_byte(reg_pc(7 downto 0),BRK2);
