@@ -142,7 +142,6 @@ architecture behavioral of iomapper is
 
 
   signal kickstartcs : std_logic;
-  signal kickstartwrite : std_logic;
 
   signal clock50hz : std_logic := '1';
   constant divisor50hz : integer := 640000; -- 64MHz/50Hz/2;
@@ -163,7 +162,7 @@ begin
   kickstartrom : kickstart port map (
     clk     => clk,
     address => address(12 downto 0),
-    we      => kickstartwrite,
+    we      => w,
     cs      => kickstartcs,
     data_i  => data_i,
     data_o  => data_o);
@@ -263,9 +262,6 @@ begin
   process (r,w,address,cia1portb_in,cia1porta_out,colourram_at_dc00)
   begin  -- process
 
-    -- switch 14 must be on to write to kickstart memory.
-    kickstartwrite <= w and sw(14);
-    
     if (r or w) = '1' then
       if address(19 downto 13)&'0' = x"FC" then
         kickstartcs<= '1';
