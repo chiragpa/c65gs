@@ -176,10 +176,10 @@ int process_line(char *line,int live)
 	printf("\n");
 	// loaded ok.
 	char cmd[64];
-	// snprintf(cmd,64,"s9ff0 18 a9 00 a2 %02x a0 %02x 4c a9 f5\r",
-	// 	 load_addr&0xff,(load_addr>>8)&0xff);
-	snprintf(cmd,64,"s9ff0 18 a9 00 a2 %02x a0 %02x 4c a7 e1\r",
+	snprintf(cmd,64,"s9ff0 18 a9 00 a2 %02x 86 2d a0 %02x 84 2e 4c a9 f5\r",
 		 load_addr&0xff,(load_addr>>8)&0xff);
+	// snprintf(cmd,64,"s9ff0 18 a9 00 a2 %02x a0 %02x 4c a7 e1\r",
+	// load_addr&0xff,(load_addr>>8)&0xff);
 	usleep(10000);
 	slow_write(fd,cmd,strlen(cmd));
 	usleep(10000);
