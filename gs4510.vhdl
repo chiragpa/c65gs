@@ -1647,7 +1647,11 @@ downto 8) = x"D3F" then
       if reset = '0' or state = ResetLow then
 
         -- reset cpu
-        kickstart_en <= '1';
+        -- we used to enable kickstart ROM each time, but really there is no point.
+        -- once the proper rom has been loaded, it should get used everytime.
+        -- will also conveniently work around the bugs we are having with kickstart
+        -- getting corrupted after first boot.
+        -- kickstart_en <= '1';
         fastio_write <= '0';
         state <= VectorRead;
         vector <= x"FFFC";
