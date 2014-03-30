@@ -541,7 +541,8 @@ begin
     next_pc : in unsigned(15 downto 0)) is
   begin  -- ready_for_next_instruction
     state <= InstructionFetch;
-    reg_pc_jsr <= next_pc + 2;
+    report "reg_pc_jsr = $" & to_hstring(next_pc+2) severity note;
+    reg_pc_jsr <= next_pc - 1;
     -- XXX Resolve PC to long address.
     -- XXX Schedule reading from all four i-cache files
     -- (uses less logic than picking only one)
@@ -1980,7 +1981,6 @@ downto 8) = x"D3F" then
                     opcode <= read_data;
                     reg_opcode <= read_data;
                     monitor_opcode <= std_logic_vector(read_data);
-                    reg_pc <= reg_pc + 2;
                     if fastram_byte_3_valid='1' then
                       -- we have enough bytes
                       reg_pc <= reg_pc + 3;
@@ -1988,6 +1988,7 @@ downto 8) = x"D3F" then
                     else
                       -- we have only 2 bytes
                       -- need a 3rd byte
+                      reg_pc <= reg_pc + 2;
                       arg1 <= read_fastram_byte_2;
                       read_instruction_byte(reg_pc+1,InstructionFetch4);
                     end if;
