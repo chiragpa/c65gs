@@ -215,7 +215,7 @@ architecture Behavioural of gs4510 is
     Interrupt,VectorRead,VectorRead1,VectorRead2,VectorRead3,
     DMAgic0,DMAgic1,DMAgic2,DMAgic3,DMAgic4,DMAgic5,DMAgic6,DMAgic7,
     DMAgic8,DMAgic9,DMAgic10,DMAgic11,DMAgic12,DMAgic13,DMAgic14,DMAgic15,
-    InstructionFetch,
+    InstructionFetch,InstructionFetchFast,
     InstructionFetch2,InstructionFetch3,InstructionFetch4,
     BRK1,BRK2,PLA1,PLX1,PLY1,PLZ1,PLP1,RTI1,RTI2,RTI3,
     RTS1,RTS2,
@@ -239,6 +239,7 @@ architecture Behavioural of gs4510 is
   -- Information about instruction currently being executed
   signal opcode : unsigned(7 downto 0);
   signal arg1 : unsigned(7 downto 0);
+  signal arg2 : unsigned(7 downto 0);
 
   signal bbs_or_bbc : std_logic;
   signal bbs_bit : unsigned(2 downto 0);
@@ -1966,12 +1967,14 @@ downto 8) = x"D3F" then
                 -- bytes of the instruction are available immediately.
                 if fastdecode='1'
                   and accessing_ram = '1' and fastram_byte_2_valid='1' then
-                  if mode_bytes_lut(mode_lut(to_integer(opcode)))=2 then
+                  arg1 <= read_fastram_byte_2;
+                  arg2 <= read_fastram_byte_3;
+                  reg_opcode <= read_data;
+                  if mode_bytes_lut(mode_lut(to_integer(unsigned(read_data))))=2 then
                     -- two byte instruction with two bytes available
                     -- no funny JSR fixes required, because JSR is a 3 byte
                     -- instruction
-                    execute_instruction(opcode,read_fastram_byte_2,
-                                        x"00");
+                    state <= InstructionFetchFast;
                   else
                     -- three byte instruction
                     opcode <= read_data;
@@ -1981,8 +1984,7 @@ downto 8) = x"D3F" then
                     if fastram_byte_3_valid='1' then
                       -- we have enough bytes
                       reg_pc <= reg_pc + 3;
-                      execute_instruction(opcode,read_fastram_byte_2,
-                                          read_fastram_byte_3);
+                      state <= InstructionFetchFast;
                     else
                       -- we have only 2 bytes
                       -- need a 3rd byte
@@ -1999,6 +2001,8 @@ downto 8) = x"D3F" then
                   read_instruction_byte(reg_pc,InstructionFetch3);
                 end if;
               end if;
+            when InstructionFetchFast =>
+              execute_instruction(reg_opcode,arg1,arg2);
             when InstructionFetch3 =>
               -- we now have 2 bytes of the instruction
               if mode_bytes_lut(mode_lut(to_integer(opcode)))=2 then
