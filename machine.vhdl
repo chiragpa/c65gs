@@ -664,7 +664,7 @@ begin
   -----------------------------------------------------------------------------
   monitor0 : uart_monitor port map (
     reset => btnCpuReset,
-    clock => cpuclock,
+    clock => uartclock,
     tx       => UART_TXD,
     rx       => RsRx,
 
