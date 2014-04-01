@@ -281,7 +281,8 @@ architecture Behavioral of machine is
           sector_buffer_mapped : out std_logic;
           colourram_at_dc00 : in std_logic;
           viciii_iomode : in std_logic_vector(1 downto 0);
-
+          cpu_divisor : out unsigned(7 downto 0);
+          
           sw : in std_logic_vector(15 downto 0);
           btn : in std_logic_vector(4 downto 0);
           seg_led : out unsigned(31 downto 0);
@@ -343,7 +344,9 @@ architecture Behavioral of machine is
   -- $07 - 192MHz/(7+1)=192/8=24MHz
   -- $9F - 192MHz/160 = 1.2MHz
   -- $FF - 192MHz/256 = 0.75MHz
-  signal cpuclock_divisor : unsigned(7 downto 0) := x"05";
+  -- This is mapped by sdcardio.vhdl at $D68F as a write-only
+  -- register.
+  signal cpuclock_divisor : unsigned(7 downto 0);
   
   signal rom_at_e000 : std_logic := '0';
   signal rom_at_c000 : std_logic := '0';
@@ -645,6 +648,8 @@ begin
     viciii_iomode => viciii_iomode,
     sector_buffer_mapped => sector_buffer_mapped,
 
+    cpu_divisor => cpuclock_divisor,
+    
     cs_bo => cs_bo,
     sclk_o => sclk_o,
     mosi_o => mosi_o,

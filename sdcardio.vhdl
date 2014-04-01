@@ -23,7 +23,9 @@ entity sdcardio is
 
     colourram_at_dc00 : in std_logic;
     viciii_iomode : in std_logic_vector(1 downto 0);
-    
+
+    cpu_divisor : out unsigned(7 downto 0) := x"05";
+
     sectorbuffermapped : out std_logic := '0';
     sectorbuffermapped2 : out std_logic := '0';
     sectorbuffercs : in std_logic;
@@ -299,6 +301,11 @@ std_logic'image(colourram_at_dc00) & ", sector_buffer_mapped = " & std_logic'ima
               when x"2" => sd_sector(15 downto 8) <= std_logic_vector(fastio_wdata);
               when x"3" => sd_sector(23 downto 16) <= std_logic_vector(fastio_wdata);
               when x"4" => sd_sector(31 downto 24) <= std_logic_vector(fastio_wdata);
+              when x"f" =>
+                -- $D68F sets CPU divisor.
+                if fastio_wdata /= x"00" then
+                  cpu_divisor <= fastio_wdata;                  
+                end if;
               when others => null;
             end case;
           end if;
