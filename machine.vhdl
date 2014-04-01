@@ -324,9 +324,27 @@ architecture Behavioral of machine is
   signal fastram_datain : STD_LOGIC_VECTOR(63 DOWNTO 0);
   signal fastram_dataout : STD_LOGIC_VECTOR(63 DOWNTO 0);
 
-  signal cpuclock : std_logic := '1';
-  signal cpuclock_divisor : integer range 0 to 3 := 0;
+  signal uartclock : std_logic := '1';
+  signal uartclock_index : integer range 0 to 3 := 0;
 
+  signal cpuclock : std_logic := '0';
+  signal cpuclock_index : unsigned(7 downto 0) := x"00";
+  -- divisor is the maximum the clock divider counts to,
+  -- so effectively the clock rate is 192MHz/(divisor+1),
+  -- unless the divisor is 0, in which case the clock stops,
+  -- since it will be set high every cycle.
+  -- So expected clock speeds are:
+  -- $01 - 192MHz/(1+1)=192/2=96MHz
+  -- $02 - 192MHz/(2+1)=192/3=64MHz
+  -- $03 - 192MHz/(3+1)=192/4=48MHz
+  -- $04 - 192MHz/(4+1)=192/5=38.4MHz
+  -- $05 - 192MHz/(5+1)=192/6=32MHz
+  -- $06 - 192MHz/(6+1)=192/7=27.4MHz
+  -- $07 - 192MHz/(7+1)=192/8=24MHz
+  -- $9F - 192MHz/160 = 1.2MHz
+  -- $FF - 192MHz/256 = 0.75MHz
+  signal cpuclock_divisor : unsigned(7 downto 0) := x"05";
+  
   signal rom_at_e000 : std_logic := '0';
   signal rom_at_c000 : std_logic := '0';
   signal rom_at_a000 : std_logic := '0';
@@ -395,16 +413,23 @@ begin
   begin
     if rising_edge(pixelclock) then
 
-      -- 1 = 48MHz
-      -- 2 = 32MHz
-      -- 3 = 24MHz
-      -- 191 = 1MHz
-      -- (don't forget to update uart_monitor baudrate divisor as well)
-      if cpuclock_divisor<2 then
-        cpuclock_divisor <= cpuclock_divisor + 1;
+      -- Run serial monitor at constant 32MHz
+      if uartclock_index<2 then
+        uartclock_index <= uartclock_index + 1;
       else
-        cpuclock_divisor <= 0;
-        cpuclock <= not cpuclock;
+        uartclock_index <= 0;
+        uartclock <= not uartclock;
+      end if;
+
+      -- Make CPU clock flexible.
+      -- Clock only needs to be high briefly, so we can just
+      -- vary the time the clock is low.
+      if cpuclock_index /= cpuclock_divisor then
+        cpuclock_index <= cpuclock_index + 1;
+        cpuclock <= '0';
+      else
+        cpuclock_index <= x"00";
+        cpuclock <= '1';
       end if;
 
       -- Work out phi0 frequency for CIA timers
