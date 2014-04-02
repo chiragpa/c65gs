@@ -2060,8 +2060,10 @@ downto 8) = x"D3F" then
               colour_ram_cs <= colour_ram_cs_last;
               accessing_fastio <= accessing_fastio;
               accessing_vic_fastio <= accessing_vic_fastio;
-
-              state <= pending_state; accessing_fastio <= '1';
+              accessing_colour_ram_fastio <= accessing_colour_ram_fastio;
+              accessing_sb_fastio <= accessing_sb_fastio;
+              accessing_fastio <= '1';
+              state <= pending_state; 
             when SlowRamRead1 =>
               slowram_ce <= '0';
               slowram_oe <= '0';
