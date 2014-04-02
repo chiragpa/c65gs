@@ -430,7 +430,7 @@ begin
       -- Make CPU clock flexible.
       -- Clock only needs to be high briefly, so we can just
       -- vary the time the clock is low.
-      if cpuclock_index /= 5 then -- cpuclock_divisor then
+      if cpuclock_index /= 4 then -- cpuclock_divisor then
         cpuclock_index <= cpuclock_index + 1;
         cpuclock <= '0';
       else
