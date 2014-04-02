@@ -34,6 +34,7 @@ use work.debugtools.all;
 entity gs4510 is
   port (
     Clock : in std_logic;
+    ioclock : in std_logic;
     reset : in std_logic;
     irq : in std_logic;
     nmi : in std_logic;
@@ -232,6 +233,10 @@ architecture Behavioural of gs4510 is
   -- For memory access we push the processor state to follow once the memory
   -- access is complete.
   signal pending_state : processor_state;
+
+  -- wait state count for accessing IO
+  signal fastio_wait_count : unsigned(1 downto 0);
+  
   -- Information about instruction currently being executed
   signal opcode : unsigned(7 downto 0);
   signal arg1 : unsigned(7 downto 0);
@@ -592,7 +597,12 @@ begin
       last_fastio_addr(11) <= '0';
       last_fastio_addr(10 downto 0) <= std_logic_vector(long_address(10 downto 0));
       fastio_read <= '1'; fastio_write <= '0';
-      pending_state <= next_state;      
+      pending_state <= next_state;
+      if ioclock='1' then
+        fastio_wait_count <= "10";
+      else
+        fastio_wait_count <= "01";
+      end if;
       state <= FastIOWait;
     elsif long_address(27 downto 17)="00000000000" then
       report "Reading from fastram address $" & to_hstring(long_address(19 downto 0))
@@ -707,6 +717,11 @@ downto 8) = x"D3F" then
         end if;
       else
         pending_state <= next_state;
+        if ioclock='1' then
+          fastio_wait_count <= "10";
+        else
+          fastio_wait_count <= "01";
+        end if;
         state <= FastIOWait;
       end if;
     else
@@ -2063,7 +2078,11 @@ downto 8) = x"D3F" then
               accessing_colour_ram_fastio <= accessing_colour_ram_fastio;
               accessing_sb_fastio <= accessing_sb_fastio;
               accessing_fastio <= '1';
-              state <= pending_state; 
+              if fastio_wait_count /= 0 then
+                fastio_wait_count <= fastio_wait_count - 1;
+              else
+                state <= pending_state;
+              end if;
             when SlowRamRead1 =>
               slowram_ce <= '0';
               slowram_oe <= '0';

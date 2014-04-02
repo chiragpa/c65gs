@@ -139,6 +139,7 @@ architecture Behavioral of machine is
   component gs4510
     port (
       Clock : in std_logic;
+      ioclock : in std_logic;
       reset : in std_logic;
       irq : in std_logic;
       nmi : in std_logic;
@@ -347,6 +348,8 @@ architecture Behavioral of machine is
   -- This is mapped by sdcardio.vhdl at $D68F as a write-only
   -- register.
   signal cpuclock_divisor : unsigned(7 downto 0);
+  -- IO clock is 1/2 CPU clock.
+  signal ioclock : std_logic := '0';
   
   signal rom_at_e000 : std_logic := '0';
   signal rom_at_c000 : std_logic := '0';
@@ -427,12 +430,13 @@ begin
       -- Make CPU clock flexible.
       -- Clock only needs to be high briefly, so we can just
       -- vary the time the clock is low.
-      if cpuclock_index /= cpuclock_divisor then
+      if cpuclock_index /= 5 then -- cpuclock_divisor then
         cpuclock_index <= cpuclock_index + 1;
         cpuclock <= '0';
       else
         cpuclock_index <= x"00";
         cpuclock <= '1';
+        ioclock <= not ioclock;
       end if;
 
       -- Work out phi0 frequency for CIA timers
@@ -527,6 +531,7 @@ begin
   
   cpu0: gs4510 port map(
     clock => cpuclock,
+    ioclock => ioclock,
     reset =>btnCpuReset,
     irq => combinedirq,
     nmi => combinednmi,
@@ -631,7 +636,7 @@ begin
       );
   
   iomapper0: iomapper port map (
-    clk => cpuclock,
+    clk => ioclock,
     pixelclk => pixelclock,
     phi0 => phi0,
     reset => btnCpuReset,
