@@ -34,18 +34,13 @@ begin  -- behavioural
   
   process (slowclock, address_in, wea_in, data_in)
   begin  -- process
-    if wea_internal="00000000" then
-      address_out <= address_in;
-    end if;
     if rising_edge(slowclock) then
       address_internal <= address_in;
       wea_internal <= wea_in;
       data_internal <= data_in;
     end if;
     if rising_edge(fastclock) then
-      if wea_internal/="00000000" then
-        address_out <= address_internal;
-      end if;
+      address_out <= address_internal;
       wea_out <= wea_internal;
       data_out <= data_internal;
     end if;
