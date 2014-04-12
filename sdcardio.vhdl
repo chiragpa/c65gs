@@ -130,7 +130,7 @@ architecture behavioural of sdcardio is
   signal f011_sector : unsigned(7 downto 0) := x"00";
   signal physical_sector : unsigned(7 downto 0) := x"00";
   signal f011_side : unsigned(7 downto 0) := x"00";
-  signal f011_sector_fetch : std_logic := '0';
+  signal f011_sector_operation : std_logic := '0';
 
   signal f011_buffer_address : unsigned(8 downto 0) := (others => '0');
   signal f011_buffer_next_read : unsigned(8 downto 0) := (others => '0');
@@ -403,7 +403,7 @@ std_logic'image(colourram_at_dc00) & ", sector_buffer_mapped = " & std_logic'ima
                       -- with it pointing to the end of the buffer first
                       f011_buffer_address(7 downto 0) <= (others => '1');
                       f011_buffer_address(8) <= '1';
-                      f011_sector_fetch <= '1';
+                      f011_sector_operation <= '1';
                       f011_busy <= '1';
                       if sdhc_mode='1' then
                         sd_sector <= diskimage_sector + diskimage_offset;
@@ -719,7 +719,7 @@ std_logic'image(colourram_at_dc00) & ", sector_buffer_mapped = " & std_logic'ima
             if skip=0 then
               sector_offset <= sector_offset + 1;
               read_bytes <= '1';
-              if f011_sector_fetch='1' then
+              if f011_sector_operation='1' then
                 f011_rsector_found <= '1';
                 if f011_drq='1' then f011_lost <= '1'; end if;
                 f011_drq <= '1';
@@ -744,7 +744,7 @@ std_logic'image(colourram_at_dc00) & ", sector_buffer_mapped = " & std_logic'ima
               -- Advance sector offset to 512 for compatibility with existing code.
               sector_offset <= sector_offset + 1;
               -- Update F011 FDC emulation status registers
-              f011_sector_fetch <= '0';
+              f011_sector_operation <= '0';
               f011_busy <= '0';
               sd_state <= DoneReadingSector;
             else
