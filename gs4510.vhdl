@@ -1663,8 +1663,6 @@ downto 8) = x"D3F" then
       -- we can ask for it in JMP1
       reg_addr <= (arg2 & arg1) + reg_x +1;
     elsif mode=M_InnX then
-      -- Read ZP indirect from data memory map, since ZP is written into that
-      -- map.
       reg_instruction <= i;
       reg_addr <= x"00" & (arg1 + reg_x +1);
       read_data_byte(x"00" & (arg1 + reg_x),IndirectX1);
@@ -2144,6 +2142,7 @@ downto 8) = x"D3F" then
                 severity note;
               read_data_byte(read_data & reg_addr(7 downto 0),IndirectX3);
             when IndirectX3 =>
+              report "executing (nn,X) instruction with target address of $" & to_hstring(read_data & reg_addr(7 downto 0)) severity note;
               execute_operand_instruction(reg_opcode,reg_instruction,read_data,reg_addr);
             when IndirectY1 =>
               reg_addr(7 downto 0) <= read_data;
