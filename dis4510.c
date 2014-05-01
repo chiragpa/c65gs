@@ -156,8 +156,12 @@ int main(int argc,char **argv)
 	while(is_data[load_address+i]==3&&(i-j<8)) {
 	  if (mem[i]>=' '&&mem[i]<=0x7c)
 	    printf("%c",mem[i++]);
-	  else
-	    printf("<%02X>",mem[i++]);
+	  else {
+	    if ((mem[i]>=0xc1&&mem[i]<=(0xc1+25))||mem[i]==0xa4)
+	      printf("<shift-%c>",mem[i++]&0x7f);
+	    else
+	      printf("<%02X>",mem[i++]);
+	  }
 	}
 	printf("'");
       } else {
