@@ -121,12 +121,12 @@ architecture Behavioural of gs4510 is
 
 component program_counter is
   port (
-    pc_in : unsigned(15 downto 0);
-    pcl_in : unsigned(15 downto 0);
-    pch_in : unsigned(15 downto 0);
+    clock : in std_logic;
+    pcl_in : in unsigned(15 downto 0);
+    pch_in : in unsigned(15 downto 0);
 
-    branch8_in : unsigned(7 downto 0);
-    branch16_in : unsigned(15 downto 0);
+    branch8_in : in unsigned(7 downto 0);
+    branch16_in : in unsigned(15 downto 0);
 
     set_pcl : in std_logic;
     set_pch : in std_logic;
@@ -134,7 +134,7 @@ component program_counter is
     take_branch8 : in std_logic;
     take_branch16 : in std_logic;
 
-    pc_out : unsigned(15 downto 0)
+    pc_out : out unsigned(15 downto 0)
     );
 end component;
   
