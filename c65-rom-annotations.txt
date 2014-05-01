@@ -84,7 +84,9 @@ text 2293 22d3
 22F9 CHRGET routine
 22FB CHRGOT routine
 245e Try to tokenise string?
-@2468 read byte from list of BASIC keywords
+@2468 read byte from line of input
+@246D read byte from list of BASIC keywords
+@2475 read byte from list of BASIC keywords
 @246A Take branch if character is shifted, i.e., last character of keyword
 @2473 Take branch if shifted character matches, i.e., we have found an abbreviated keyword
 text 24a4 27FD
