@@ -122,6 +122,8 @@ architecture Behavioural of gs4510 is
 component program_counter is
   port (
     clock : in std_logic;
+    pc_in : in unsigned(15 downto 0);
+
     pcl_in : in unsigned(7 downto 0);
     pch_in : in unsigned(7 downto 0);
 
@@ -414,6 +416,7 @@ begin
     take_branch16 => take_branch16,
     set_pch      => set_pch,
     set_pcl      => set_pcl,
+    pc_in        => reg_pc,
     pc_out       => reg_pc);
   
   process(clock)
@@ -1833,14 +1836,11 @@ downto 8) = x"D3F" then
             when Interrupt2 => push_byte(reg_pc(7 downto 0),Interrupt3);
             when Interrupt3 => push_byte(unsigned(virtual_reg_p),VectorRead); flag_i <= '1';
             when VectorRead =>
-              -- reg_pc <= vector;
-              pch_in <= vector(15 downto 8); set_pch <= '1';
-              pcl_in <= vector(7 downto 0); set_pcl <= '1';
               read_instruction_byte(vector,VectorRead2);
             when VectorRead2 =>
               -- reg_pc(7 downto 0) <= read_data;
               pcl_in <= read_data; set_pcl <= '1';
-              read_instruction_byte(vector+1,VectorRead3);
+              read_instruction_byte(vector(15 downto 1) & "1",VectorRead3);
             when VectorRead3 =>
               -- reg_pc(15 downto 8) <= read_data;
               pch_in <= read_data; set_pch <= '1';
