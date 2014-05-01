@@ -122,8 +122,8 @@ architecture Behavioural of gs4510 is
 component program_counter is
   port (
     clock : in std_logic;
-    pcl_in : in unsigned(15 downto 0);
-    pch_in : in unsigned(15 downto 0);
+    pcl_in : in unsigned(7 downto 0);
+    pch_in : in unsigned(7 downto 0);
 
     branch8_in : in unsigned(7 downto 0);
     branch16_in : in unsigned(15 downto 0);
@@ -137,7 +137,17 @@ component program_counter is
     pc_out : out unsigned(15 downto 0)
     );
 end component;
-  
+
+  signal pcl_in : unsigned(7 downto 0);
+  signal pch_in : unsigned(7 downto 0);
+  signal branch8_in : unsigned(7 downto 0);
+  signal branch16_in : unsigned(15 downto 0);
+  signal set_pcl : std_logic;
+  signal set_pch : std_logic;
+  signal inc_pc : std_logic;
+  signal take_branch8 : std_logic;
+  signal take_branch16 : std_logic;
+
   signal kickstart_en : std_logic := '1';
   signal colour_ram_cs_last : std_logic := '0';
 
@@ -392,6 +402,20 @@ end component;
   signal monitor_mem_trace_toggle_last : std_logic := '0';
 
 begin
+
+  pc0 : program_counter port map (
+    clock        => clock,
+    pcl_in       => pcl_in,
+    pch_in       => pch_in,
+    branch8_in   => branch8_in,
+    branch16_in  => branch16_in,
+    inc_pc       => inc_pc,
+    take_branch8 => take_branch8,
+    take_branch16 => take_branch16,
+    set_pch      => set_pch,
+    set_pcl      => set_pcl,
+    pc_out       => reg_pc);
+  
   process(clock)
 
     procedure reset_cpu_state is
@@ -423,8 +447,8 @@ begin
     flag_e <= '1';
 
     cpuport_ddr <= x"FF";
-    cpuport_value <= x"3F";
-
+    cpuport_value <= x"3F";    
+    
     -- Don't write to fastio when resetting.
     -- (this is an attempt to stop the boot vectors getting overwritten)
     fastio_write <= '0'; fastio_read <= '0';
@@ -1226,7 +1250,8 @@ downto 8) = x"D3F" then
           vector <= x"FFFE";    -- BRK follows the IRQ vector
           -- Add one to match what a real 6502 does with virtual operand
           temp_pc := reg_pc + 1;
-          reg_pc <= temp_pc;
+          -- reg_pc <= temp_pc;
+          inc_pc <= '1';
           push_byte(temp_pc(15 downto 8),BRK1);
         when I_CLC => flag_c <= '0';
         when I_CLD => flag_d <= '0';
@@ -1559,11 +1584,13 @@ downto 8) = x"D3F" then
     --  & " mode " & addressingmode'image(mode) severity note;
     
     if i=I_BSR then
-      if arg2(7)='0' then -- branch forwards.
-        reg_pc <= reg_pc + unsigned(std_logic_vector(arg2(6 downto 0)) & std_logic_vector(arg1)) - 1;
-      else -- branch backwards.
-        reg_pc <= (reg_pc - x"8001") + unsigned(std_logic_vector(arg2(6 downto 0)) & std_logic_vector(arg1));
-      end if;
+      branch16_in <= arg2 & arg1;
+      take_branch16 <= '1';
+--      if arg2(7)='0' then -- branch forwards.
+--        reg_pc <= reg_pc + unsigned(std_logic_vector(arg2(6 downto 0)) & std_logic_vector(arg1)) - 1;
+--      else -- branch backwards.
+--        reg_pc <= (reg_pc - x"8001") + unsigned(std_logic_vector(arg2(6 downto 0)) & std_logic_vector(arg1));
+--      end if;
       push_byte(reg_pc_jsr(15 downto 8),JSR1);      
     elsif mode=M_rr or mode=M_rrrr then
       if (i=I_BCC and flag_c='0')
@@ -1579,18 +1606,22 @@ downto 8) = x"D3F" then
         -- take branch
         if mode=M_rr then
           -- 8-bit branch
-          if arg1(7)='0' then -- branch forwards.
-            reg_pc <= reg_pc + unsigned(arg1(6 downto 0));
-          else -- branch backwards.
-            reg_pc <= (reg_pc - x"0080") + unsigned(arg1(6 downto 0));
-          end if;
+          branch8_in <= arg1;
+          take_branch8 <= '1';
+--          if arg1(7)='0' then -- branch forwards.
+--            reg_pc <= reg_pc + unsigned(arg1(6 downto 0));
+--          else -- branch backwards.
+--            reg_pc <= (reg_pc - x"0080") + unsigned(arg1(6 downto 0));
+--          end if;
         else
           -- 16-bit branch
-          if arg2(7)='0' then -- branch forwards.
-            reg_pc <= reg_pc + unsigned(std_logic_vector(arg2(6 downto 0)) & std_logic_vector(arg1)) - 1;
-          else -- branch backwards.
-            reg_pc <= (reg_pc - x"8001") + unsigned(std_logic_vector(arg2(6 downto 0)) & std_logic_vector(arg1));
-          end if;
+          branch16_in <= arg1 & arg2;
+          take_branch16 <= '1';
+--          if arg2(7)='0' then -- branch forwards.
+--            reg_pc <= reg_pc + unsigned(std_logic_vector(arg2(6 downto 0)) & std_logic_vector(arg1)) - 1;
+--          else -- branch backwards.
+--            reg_pc <= (reg_pc - x"8001") + unsigned(std_logic_vector(arg2(6 downto 0)) & std_logic_vector(arg1));
+--          end if;
         end if;
       end if;
     elsif mode=M_nnrr then
@@ -1601,7 +1632,10 @@ downto 8) = x"D3F" then
       reg_value <= arg2;
       read_data_byte(reg_b & arg1,BranchOnBit); 
     elsif i=I_JSR and mode=M_nnnn then
-      reg_pc <= arg2 & arg1; push_byte(reg_pc_jsr(15 downto 8),JSR1);
+      -- reg_pc <= arg2 & arg1;
+      pcl_in <= arg1; set_pcl <= '1';
+      pch_in <= arg2; set_pch <= '1';
+      push_byte(reg_pc_jsr(15 downto 8),JSR1);
     elsif i=I_JSR and mode=M_Innnn then
       reg_addr <= arg2 & arg1;
       push_byte(reg_pc_jsr(15 downto 8),JSRind1);
@@ -1609,7 +1643,10 @@ downto 8) = x"D3F" then
       reg_addr <= (arg2 & arg1) + reg_x;
       push_byte(reg_pc_jsr(15 downto 8),JSRind1);
     elsif i=I_JMP and mode=M_nnnn then
-      reg_pc <= arg2 & arg1; state<=InstructionFetch;
+      -- reg_pc <= arg2 & arg1;
+      pcl_in <= arg1; set_pcl <= '1';
+      pch_in <= arg2; set_pch <= '1';
+      state<=InstructionFetch;
     elsif i=I_JMP and mode=M_Innnn then
       -- Read first byte of indirect vector
       read_data_byte(arg2 & arg1,JMP1);
@@ -1672,7 +1709,15 @@ downto 8) = x"D3F" then
   begin
 
     -- BEGINNING OF MAIN PROCESS FOR CPU
-    if rising_edge(clock) then     
+    if rising_edge(clock) then
+
+      -- clear program counter changes
+      inc_pc <= '0';
+      set_pcl <= '0';
+      set_pch <= '0';
+      take_branch8 <= '0';
+      take_branch16 <= '0';
+      
       -- clear memory access states
       colour_ram_cs <= '0';
       colour_ram_cs_last <= '0';
@@ -1756,7 +1801,10 @@ downto 8) = x"D3F" then
           -- and optionally set PC
           if monitor_mem_setpc='1' then
             report "PC set by monitor interface" severity note;
-            reg_pc <= unsigned(monitor_mem_address(15 downto 0));
+            -- reg_pc <= unsigned(monitor_mem_address(15 downto 0));
+            pch_in <= unsigned(monitor_mem_address(15 downto 8));
+            pcl_in <= unsigned(monitor_mem_address(7 downto 0));
+            set_pch <= '1'; set_pcl <= '1';
           end if;
         end if;   
       else
@@ -1784,10 +1832,18 @@ downto 8) = x"D3F" then
               push_byte(reg_pc(15 downto 8),Interrupt2);
             when Interrupt2 => push_byte(reg_pc(7 downto 0),Interrupt3);
             when Interrupt3 => push_byte(unsigned(virtual_reg_p),VectorRead); flag_i <= '1';
-            when VectorRead => reg_pc <= vector; read_instruction_byte(vector,VectorRead2);
-            when VectorRead2 => reg_pc(7 downto 0) <= read_data; read_instruction_byte(vector+1,VectorRead3);
+            when VectorRead =>
+              -- reg_pc <= vector;
+              pch_in <= vector(15 downto 8); set_pch <= '1';
+              pcl_in <= vector(7 downto 0); set_pcl <= '1';
+              read_instruction_byte(vector,VectorRead2);
+            when VectorRead2 =>
+              -- reg_pc(7 downto 0) <= read_data;
+              pcl_in <= read_data; set_pcl <= '1';
+              read_instruction_byte(vector+1,VectorRead3);
             when VectorRead3 =>
-              reg_pc(15 downto 8) <= read_data;
+              -- reg_pc(15 downto 8) <= read_data;
+              pch_in <= read_data; set_pch <= '1';
               ready_for_next_instruction(read_data & reg_pc(7 downto 0));
             when DMAgic0 => read_long_address(reg_dmagic_addr,DMAgic1);
                             reg_dmacount <= reg_dmacount + 1;
@@ -1962,7 +2018,8 @@ downto 8) = x"D3F" then
                     vector <= x"FFFE"; state <=Interrupt;  
                   else
                     read_instruction_byte(reg_pc,InstructionFetch2);
-                    reg_pc <= reg_pc + 1;
+                    -- reg_pc <= reg_pc + 1;
+                    inc_pc <= '1';
                     report "reg_pc bump from $" & to_hstring(reg_pc) severity note;
                   end if;
                 end if;
@@ -1980,14 +2037,16 @@ downto 8) = x"D3F" then
                 opcode <= read_data;
                 reg_opcode <= read_data;
                 monitor_opcode <= std_logic_vector(read_data);
-                reg_pc <= reg_pc + 1;
+                -- reg_pc <= reg_pc + 1;
+                inc_pc <= '1';
                 report "reg_pc bump from $" & to_hstring(reg_pc) severity note;
                 read_instruction_byte(reg_pc,InstructionFetch3);
               end if;
             when InstructionFetch3 =>
               if mode_bytes_lut(mode_lut(to_integer(opcode)))=2 then
                 arg1 <= read_data;
-                reg_pc <= reg_pc + 1;
+                -- reg_pc <= reg_pc + 1;
+                inc_pc <= '1';
                 reg_pc_jsr <= reg_pc;     -- keep PC after one operand for JSR
                 report "reg_pc bump from $" & to_hstring(reg_pc) severity note;
                 read_instruction_byte(reg_pc,InstructionFetch4);
@@ -2022,28 +2081,44 @@ downto 8) = x"D3F" then
             when PLP1 => load_processor_flags(read_data);
                          ready_for_next_instruction(reg_pc);
             when RTI1 => load_processor_flags(read_data); pull_byte(RTI2);
-            when RTI2 => reg_pc(7 downto 0) <= read_data; pull_byte(RTI3);
-            when RTI3 => temp_pc := read_data & reg_pc(7 downto 0);
-                         reg_pc <= temp_pc; ready_for_next_instruction(temp_pc);
-            when RTS1 => reg_pc(7 downto 0) <= read_data; pull_byte(RTS2);
-            when RTS2 => temp_pc := (read_data & reg_pc(7 downto 0))+1;
-                         reg_pc <= temp_pc; ready_for_next_instruction(temp_pc);
+            when RTI2 =>
+              -- reg_pc(7 downto 0) <= read_data;
+              pcl_in <= read_data; set_pcl <= '1';              
+              pull_byte(RTI3);
+            when RTI3 =>
+              temp_pc := read_data & reg_pc(7 downto 0);
+              -- reg_pc <= temp_pc;
+              pch_in <= read_data; set_pch <= '1';
+              ready_for_next_instruction(temp_pc);
+            when RTS1 =>
+              -- reg_pc(7 downto 0) <= read_data;
+              pcl_in <= read_data; set_pcl <= '1';
+              pull_byte(RTS2);
+            when RTS2 =>
+              temp_pc := (read_data & reg_pc(7 downto 0))+1;
+              -- reg_pc <= temp_pc;
+              pch_in <= temp_pc(15 downto 8); set_pch <= '1';
+              pcl_in <= temp_pc(7 downto 0); set_pch <= '1';
+              ready_for_next_instruction(temp_pc);
             when JSR1 => push_byte(reg_pc_jsr(7 downto 0),InstructionFetch);
             when JSRind1 => push_byte(reg_pc_jsr(7 downto 0),JSRind2);
             when JSRind2 =>
               read_data_byte(reg_addr,JSRind3);
               reg_addr <= reg_addr + 1;
             when JSRind3 =>
-              reg_pc(7 downto 0) <= read_data;
+              -- reg_pc(7 downto 0) <= read_data;
+              pcl_in <= read_data; set_pcl <= '1';
               read_data_byte(reg_addr,JSRind4);
             when JSRind4 =>
-              reg_pc(15 downto 8) <= read_data;
+              -- reg_pc(15 downto 8) <= read_data;
+              pch_in <= read_data; set_pch <= '1';
               ready_for_next_instruction(read_data & reg_pc(7 downto 0));
             when PHWimm1 => push_byte(reg_value,InstructionFetch);
             when JMP1 =>
               -- Add a wait state to see if it fixes our problem with not loading
               -- addresses properly for indirect jump
-              reg_pc(7 downto 0)<=read_data;
+              -- reg_pc(7 downto 0) <= read_data;
+              pcl_in <= read_data; set_pcl <= '1';
               state <= JMP2;
             when JMP2 =>
               -- Request reading of high byte of vector
@@ -2053,7 +2128,8 @@ downto 8) = x"D3F" then
             when JMP3 =>
               -- Now assemble complete vector
               report "read PCH as $" & to_hstring(read_data) severity note;
-              reg_pc(15 downto 8) <= read_data;
+              -- reg_pc(15 downto 8) <= read_data;
+              pch_in <= read_data; set_pch <= '1';
               -- And then continue executing from there
               ready_for_next_instruction(read_data & reg_pc(7 downto 0));
             when IndirectX1 =>
@@ -2193,11 +2269,13 @@ downto 8) = x"D3F" then
                 = bbs_or_bbc then
                 report "taking branch" severity note;
                 -- 8-bit branch
-                if reg_value(7)='0' then -- branch forwards.
-                  reg_pc <= reg_pc + unsigned(reg_value(6 downto 0));
-                else -- branch backwards.
-                  reg_pc <= (reg_pc - x"0080") + unsigned(reg_value(6 downto 0));
-                end if;
+                branch8_in <= reg_value;
+                take_branch8 <= '1';
+--                if reg_value(7)='0' then -- branch forwards.
+--                  reg_pc <= reg_pc + unsigned(reg_value(6 downto 0));
+--                else -- branch backwards.
+--                  reg_pc <= (reg_pc - x"0080") + unsigned(reg_value(6 downto 0));
+--                end if;
               else
                 -- branch not taken.
               end if;
