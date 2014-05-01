@@ -22,7 +22,7 @@ entity program_counter is
     take_branch16 : in std_logic;
 
     pc_out : unsigned(15 downto 0)
-    )
+    );
 end entity program_counter;
 
 architecture behavioural of program_counter is
