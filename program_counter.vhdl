@@ -34,7 +34,7 @@ begin  -- behavioural
   -- type   : sequential
   -- inputs : clock, pc_in, pcl_in, pch_in, branch8_in, branch16_in, set_pcl, set_pch, inc_pc, take_branch8, take_branch16
   -- outputs: pc_out
-  pc: process (clock)
+  pc: process (pc_in, pcl_in, pch_in, branch8_in, branch16_in, set_pcl, set_pch, inc_pc, take_branch8, take_branch16)
     variable new_pc : unsigned(15 downto 0);
   begin  -- process pc
       if inc_pc='1' then

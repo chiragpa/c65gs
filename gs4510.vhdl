@@ -223,6 +223,7 @@ end component;
   signal reg_sp : unsigned(7 downto 0);
   signal reg_sph : unsigned(7 downto 0);
   signal reg_pc : unsigned(15 downto 0);
+  signal reg_pc_out : unsigned(15 downto 0);
 
   -- CPU RAM bank selection registers.
   -- Now C65 style, but extended by 8 bits to give 256MB address space
@@ -417,7 +418,7 @@ begin
     set_pch      => set_pch,
     set_pcl      => set_pcl,
     pc_in        => reg_pc,
-    pc_out       => reg_pc);
+    pc_out       => reg_pc_out);
   
   process(clock)
 
@@ -1712,6 +1713,8 @@ downto 8) = x"D3F" then
     -- BEGINNING OF MAIN PROCESS FOR CPU
     if rising_edge(clock) then
 
+      reg_pc <= reg_pc_out;
+      
       -- clear program counter changes
       inc_pc <= '0';
       set_pcl <= '0';
