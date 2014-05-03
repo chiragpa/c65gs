@@ -29,6 +29,7 @@ F4 bit7 of $F4 set indicates reverse video
 0300   ierror           ;indirect error (output error in .x)
 0302   imain            ;indirect main (system direct loop)
 0304   icrnch           ;indirect crunch (tokenization routine)
+2389   crnch            ; crunch (tokenization routine)
 0306   iqplop           ;indirect list (char list)
 0308   igone            ;indirect gone (char dispatch)
 030A   ieval            ;indirect eval (symbol evaluation)
@@ -91,6 +92,7 @@ text 2293 22d3
 @2473 Take branch if shifted character matches, i.e., we have found an abbreviated keyword
 text 24a4 27FD
 24a4 BASIC commands
+2cc9 Check for colon, and if present, execute next statement.
 text 2d02 2d08
 text 2ec5 2ecb
 text 2ee0 2ee8
