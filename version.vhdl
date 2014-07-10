@@ -1,0 +1,10 @@
+library ieee;
+use Std.TextIO.all;
+use ieee.STD_LOGIC_1164.all;
+use ieee.numeric_std.all;
+
+package version is
+
+  constant gitcommit : string := "646db9c7fb8d9ef63dd668c8bf20952bc31ac837+DIRTY";
+
+end version;

@@ -1,0 +1,179 @@
+Release 14.1 - xst P.15xf (nt64)
+Copyright (c) 1995-2012 Xilinx, Inc.  All rights reserved.
+--> Parameter TMPDIR set to xst/projnav.tmp
+
+
+Total REAL time to Xst completion: 0.00 secs
+Total CPU time to Xst completion: 0.32 secs
+ 
+--> Parameter xsthdpdir set to xst
+
+
+Total REAL time to Xst completion: 0.00 secs
+Total CPU time to Xst completion: 0.32 secs
+ 
+--> Reading design: container.prj
+
+TABLE OF CONTENTS
+  1) Synthesis Options Summary
+  2) HDL Parsing
+  3) HDL Elaboration
+  4) HDL Synthesis
+       4.1) HDL Synthesis Report
+  5) Advanced HDL Synthesis
+       5.1) Advanced HDL Synthesis Report
+  6) Low Level Synthesis
+  7) Partition Report
+  8) Design Summary
+       8.1) Primitive and Black Box Usage
+       8.2) Device utilization summary
+       8.3) Partition Resource Summary
+       8.4) Timing Report
+            8.4.1) Clock Information
+            8.4.2) Asynchronous Control Signals Information
+            8.4.3) Timing Summary
+            8.4.4) Timing Details
+            8.4.5) Cross Clock Domains Report
+
+
+=========================================================================
+*                      Synthesis Options Summary                        *
+=========================================================================
+---- Source Parameters
+Input File Name                    : "container.prj"
+Ignore Synthesis Constraint File   : NO
+
+---- Target Parameters
+Output File Name                   : "container"
+Output Format                      : NGC
+Target Device                      : xc7a100t-1-csg324
+
+---- Source Options
+Top Module Name                    : container
+Automatic FSM Extraction           : YES
+FSM Encoding Algorithm             : Auto
+Safe Implementation                : No
+FSM Style                          : LUT
+RAM Extraction                     : Yes
+RAM Style                          : Auto
+ROM Extraction                     : Yes
+Shift Register Extraction          : YES
+ROM Style                          : Auto
+Resource Sharing                   : YES
+Asynchronous To Synchronous        : NO
+Shift Register Minimum Size        : 2
+Use DSP Block                      : Auto
+Automatic Register Balancing       : Yes
+
+---- Target Options
+LUT Combining                      : Auto
+Reduce Control Sets                : Auto
+Add IO Buffers                     : YES
+Global Maximum Fanout              : 100000
+Add Generic Clock Buffer(BUFG)     : 32
+Register Duplication               : YES
+Move First FlipFlop Stage          : YES
+Move Last FlipFlop Stage           : YES
+Optimize Instantiated Primitives   : YES
+Use Clock Enable                   : Auto
+Use Synchronous Set                : Auto
+Use Synchronous Reset              : Auto
+Pack IO Registers into IOBs        : True
+Equivalent register Removal        : YES
+
+---- General Options
+Optimization Goal                  : Speed
+Optimization Effort                : 2
+Power Reduction                    : NO
+Keep Hierarchy                     : No
+Netlist Hierarchy                  : As_Optimized
+RTL Output                         : Yes
+Global Optimization                : AllClockNets
+Read Cores                         : YES
+Write Timing Constraints           : NO
+Cross Clock Analysis               : NO
+Hierarchy Separator                : /
+Bus Delimiter                      : <>
+Case Specifier                     : Maintain
+Slice Utilization Ratio            : 100
+BRAM Utilization Ratio             : 100
+DSP48 Utilization Ratio            : 100
+Auto BRAM Packing                  : NO
+Slice Utilization Ratio Delta      : 5
+
+=========================================================================
+
+
+=========================================================================
+*                          HDL Parsing                                  *
+=========================================================================
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\sd.vhdl" into library work
+Parsing entity <sd_controller>.
+Parsing architecture <rtl> of entity <sd_controller>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\ram8x512.vhd" into library work
+Parsing entity <ram8x512>.
+Parsing architecture <ram8x512_a> of entity <ram8x512>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\debugtools.vhdl" into library work
+Parsing package <debugtools>.
+Parsing package body <debugtools>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\UART_TX_CTRL.vhd" into library work
+Parsing entity <UART_TX_CTRL>.
+Parsing architecture <Behavioral> of entity <uart_tx_ctrl>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\uart_rx.vhdl" into library work
+Parsing entity <uart_rx>.
+Parsing architecture <behavioural> of entity <uart_rx>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\shadowram.vhdl" into library work
+Parsing entity <shadowram>.
+Parsing architecture <Behavioral> of entity <shadowram>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\sdcardio.vhdl" into library work
+Parsing entity <sdcardio>.
+Parsing architecture <behavioural> of entity <sdcardio>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\ram8x64k.vhd" into library work
+Parsing entity <ram8x64k>.
+Parsing architecture <ram8x64k_a> of entity <ram8x64k>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\ram32x1024.vhd" into library work
+Parsing entity <ram32x1024>.
+Parsing architecture <ram32x1024_a> of entity <ram32x1024>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\keymapper.vhdl" into library work
+Parsing entity <keymapper>.
+Parsing architecture <behavioural> of entity <keymapper>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\cia6526.vhdl" into library work
+Parsing entity <cia6526>.
+Parsing architecture <behavioural> of entity <cia6526>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\charrom.vhdl" into library work
+Parsing entity <charrom>.
+Parsing architecture <Behavioral> of entity <charrom>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\viciv.vhdl" into library work
+Parsing entity <viciv>.
+Parsing architecture <Behavioral> of entity <viciv>.
+Parsing VHDL file "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" into library work
+ERROR:HDLCompiler:104 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 25: Cannot find <version> in library <work>. Please ensure that the library was compiled, and that a library and a use clause are present in the VHDL file.
+Parsing entity <uart_monitor>.
+ERROR:HDLCompiler:854 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 27: Unit <uart_monitor> ignored due to previous errors.
+Parsing architecture <behavioural> of entity <uart_monitor>.
+ERROR:HDLCompiler:374 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 77: Entity <uart_monitor> is not yet compiled.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 79: <std_logic> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 80: <std_logic_vector> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 81: <std_logic> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 82: <std_logic> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 83: <std_logic> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 87: <std_logic> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 88: <std_logic> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 89: <std_logic_vector> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 90: <std_logic> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 91: <std_logic> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 95: <unsigned> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 99: <std_logic> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 101: <std_logic_vector> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 103: <std_logic> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 105: <std_logic_vector> is not declared.
+ERROR:HDLCompiler:69 - "C:\Users\chirag\Documents\GitHub\c65gs\uart_monitor.vhdl" Line 106: <std_logic> is not declared.
+Sorry, too many errors..
+--> 
+
+Total memory usage is 238888 kilobytes
+
+Number of errors   :   19 (   0 filtered)
+Number of warnings :    0 (   0 filtered)
+Number of infos    :    0 (   0 filtered)
+
